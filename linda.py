@@ -1,9 +1,10 @@
+#!/usr/bin/python
 """
 """
 
 import os
 import sys
-impor time
+import time
 import pickle
 import socket
 import select
@@ -70,9 +71,13 @@ class server(object):
 
     def service(self):
         self.report()
+        print 1
         while self.activate:
+            print 2
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
+            print 3
             for sock in read_list:
+                print 4
                 if sock == self.auto_socket:
                     (p,fd) = sock.recvfrom(self.recv_buffer)
                     self.sendto(str(self.auto_port),fd)
@@ -89,6 +94,8 @@ class server(object):
                         del self.connections[sock]
                         sock.close()
                     self.report()
+
+        # shutdown server
         for x in self.connections:
             if x == self.server_socket:
                 continue
@@ -128,7 +135,7 @@ class server(object):
 
         if query_flag:
             if data in self.tuple_db[search]:
-                idx,msg = [i,x for i,x in enumerate(self.tuple_db[search]) if data == x][0]
+                idx,msg = [(i,x) for i,x in enumerate(self.tuple_db[search]) if data == x][0]
                 if erase_flag:
                     self.tuple_db[search].pop[idx]
                 self.reply(sock,msg)
@@ -164,7 +171,7 @@ class client(object):
         self.host = socket.gethostname()
         self.local = socket.gethostbyname(self.host)
         self.debug = True
-        self.me = os.path.basename(__main__.__file__)
+#         self.me = os.path.basename(__main__.__file__)
         self.sock = SOCK
 
     @property
@@ -174,21 +181,25 @@ class client(object):
     def auto_connect(self):
         cast = ('<broadcast>', self.auto_port)
         broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        braodcast.settimeout(2)
+        broadcast.settimeout(2)
         broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
         broadcast.sendto(__main__.__file__, cast)
 
         try:
             (port_string,server) = broadcast.recvfrom(self.recv_buffer)
-        execpt:
+        except:
             print "no server"
             sys.exit()
+        self.auto_port = int(port_string)
+        broadcast.close()
+        self.attach(server[0])
+        return self
 
     def attach(self,svr_host,svr_port=None):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if svr_port:
             self.auto_port = svr_port
-        print("connect: %s :%s" % (svr_host, self.auto_port)
+        print("connect: %s :%s" % (svr_host, self.auto_port))
         self.sock.connect((svr_host,self.auto_port))
         return self.sock
 

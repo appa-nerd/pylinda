@@ -40,11 +40,12 @@ class server(object):
     def setup(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
+        print('server_addr', self.auto_port )
         self.server_socket.bind((self.host,self.auto_port))
         self.server_socket.listen(10)
 
         self.auto_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        print(self.auto_addr)
+        print('auto addr', self.auto_addr)
         self.auto_socket.bind(self.auto_addr)
 
         self.connections[self.server_socket] = (self.host, 'server_socket')
@@ -57,14 +58,16 @@ class server(object):
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
             for sock in read_list:
                 print('+'*10)
-                print(sock)
-                if sock == self.auto_socket:
-                    (p,fd) = sock.recvfrom(self.recv_buffer)
+                print(sock,self.auto_socket,self.server_socket)
+                if sock == self.auto_socket:    #broadcast socket
+                    print(sock,self.auto_socket)
+                    (process_name,fd) = sock.recvfrom(self.recv_buffer)
+                    print(process_name,fd)
                     sock.sendto(str(self.auto_port),fd)
                 elif sock == self.server_socket:
-                    print 2
+                    # (process_name,fd) = sock.recvfrom(self.recv_buffer)
                     sockfd, addr = self.server_socket.accept()
-                    self.connections[sockfd] = (self.now, addr, p)
+                    self.connections[sockfd] = (self.now, addr, process_name)
                 else:
                     print 3
                     try:

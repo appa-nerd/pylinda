@@ -44,16 +44,15 @@ class client(object):
         broadcast.sendto(__main__.__file__, cast)
 
         try:
-            (port_string,server) = broadcast.recvfrom(self.recv_buffer)
+            (Something,server) = broadcast.recvfrom(self.recv_buffer)
         except:
             print "no server"
             sys.exit()
-        print( 123, port_string, 'server:', server)
 
         broadcast.close()
-        (svr_host, auto_port) = server
-        print(svr_host, auto_port)
-        self.attach( svr_host, auto_port)
+
+
+        self.attach( server[0], server[1])
         return self
 
     def attach(self,svr_host,svr_port):

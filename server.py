@@ -29,6 +29,7 @@ class server(object):
         self.debug = True
         self.tuple_db = {True:[], False:[]}
         self.connections = {}
+        self.setup()
         self.activate = True
         self.service()
 
@@ -39,31 +40,33 @@ class server(object):
     def setup(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
-        self.server_socket.bind((self.local,slef.auto_port))
+        self.server_socket.bind((self.host,self.auto_port))
         self.server_socket.listen(10)
 
         self.auto_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        print(self.auto_addr)
         self.auto_socket.bind(self.auto_addr)
 
-        self.connections[self.server_socket] = (self.now, self.host, 'server_socket')
-        self.connections[self.auto_socket] = (self.now,self.host, 'auto_socket')
+        self.connections[self.server_socket] = (self.host, 'server_socket')
+        self.connections[self.auto_socket] = (self.host, 'auto_socket')
 
     def service(self):
         self.report()
-        print 1
         while self.activate:
-            print 2
+            print(self.connections.values())
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
-            print 3
             for sock in read_list:
-                print 4
+                print('+'*10)
+                print(sock)
                 if sock == self.auto_socket:
                     (p,fd) = sock.recvfrom(self.recv_buffer)
-                    self.sendto(str(self.auto_port),fd)
+                    sock.sendto(str(self.auto_port),fd)
                 elif sock == self.server_socket:
+                    print 2
                     sockfd, addr = self.server_socket.accept()
                     self.connections[sockfd] = (self.now, addr, p)
                 else:
+                    print 3
                     try:
                         data = self.xrcv(sock)
                         self.command(data,sock)
@@ -164,5 +167,17 @@ class server(object):
                     print("|\t%s" %(str(record)[:100]))
             print("-\_" + '_'*50)
         for x in self.connections:
-            n, addr, p = self.connections[x]
+            addr, p = self.connections[x]
             print("|\t%s [%s]" % (p,addr))
+"""------------------------------------------------------------*
+    Main
+#------------------------------------------------------------"""
+
+if __name__ == "__main__":
+    if len(sys.argv) <= 1:
+        print("use: ./linda.py <server/client> <port>")
+    if len(sys.argv) >= 2:
+        port = sys.argv[1]
+    else:
+        port = default_port
+    server(PORT=port)

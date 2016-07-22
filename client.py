@@ -9,13 +9,14 @@ import select
 import __main__
 import datetime
 
+from any import Any
 """------------------------------------------------------------*
     Declare
 #------------------------------------------------------------"""
 default_port = 21643
 default_buff = 65536
 max_buffer_len = 7
-
+_ = Any(Any)
 """------------------------------------------------------------*
     Classes
 #------------------------------------------------------------"""
@@ -47,17 +48,18 @@ class client(object):
         except:
             print "no server"
             sys.exit()
-        self.auto_port = int(port_string)
+        print( 123, port_string, 'server:', server)
+
         broadcast.close()
-        self.attach(server[0])
+        (svr_host, auto_port) = server
+        print(svr_host, auto_port)
+        self.attach( svr_host, auto_port)
         return self
 
-    def attach(self,svr_host,svr_port=None):
+    def attach(self,svr_host,svr_port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if svr_port:
-            self.auto_port = svr_port
-        print("connect: %s :%s" % (svr_host, self.auto_port))
-        self.sock.connect((svr_host,self.auto_port))
+        print("connect: %s :%s" % (svr_host, svr_port))
+        self.sock.connect((svr_host, svr_port))
         return self.sock
 
     def wait(self,query,timeout):
@@ -115,16 +117,14 @@ class client(object):
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print("use: ./linda.py <server/client> <port>")
-    if len(sys.argv) >= 3:
-        port = sys.argv[2]
+    if len(sys.argv) >= 2:
+        port = sys.argv[1]
     else:
         port = default_port
-    if sys.argv[1] == 'server':
-        server(PORT=port)
-    elif sys.argv[1] == 'client':
-        cfd = client(PORT=port).auto_connect()
-        cfd.post('hello')
-        print cfd.pull('hello')
+
+    cfd = client(PORT=port).auto_connect()
+    cfd.post('hello')
+    print(cfd.pull('hello'))
 
 
 """------------------------------------------------------------*

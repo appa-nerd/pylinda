@@ -83,7 +83,7 @@ class client(object):
         return self.reply(False,_,_,message)
 
     def pull(self, qry_message, block=True, erase=True):
-        self.reply(True, block,erase, qry_message)
+        self.reply(True, block, erase, qry_message)
         return self.receive()
 
     def read(self, qry_message, block=True, erase=False):
@@ -94,6 +94,7 @@ class client(object):
 
     def reply(self, query, block, erase, payload):
         # print('reply')
+        # print(payload)
         pickled_payload = pickle.dumps((query,block,erase,payload))
         self.xmit(self.sock, pickled_payload)
         # print('/reply')
@@ -108,6 +109,7 @@ class client(object):
 
     def xmit(self, sock, message):
         # print('xmit')
+        # print(message)
         sock.send(message)
         sock.recv(2)    # token reply, flushes buffer
         # print '/xmit'
@@ -134,12 +136,14 @@ if __name__ == "__main__":
         port = default_port
     print('hello')
     cfd = client(PORT=port).auto_connect()
-    print 0
     cfd.post((1,2,3,'hello'))
-    print 5
 
-    x = cfd.read((1,2,3,_))
-    print('goodbye', x)
+    print('pull')
+    y = cfd.read((1,2,3,_))
+    # y = cfd.pull((1,2,3,_))
+
+    print('goodbye', y)
+    # cfd.read('bye')
     # print(cfd.read('hello'))
 
 

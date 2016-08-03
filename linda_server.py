@@ -75,9 +75,24 @@ class server(object):
                     print('connection from:', sockfd,addr)
                     self.connections[sockfd] = (addr, process_name)
                 else:
+                    '''
+                    data = self.xrcv(sock)
+                    if data:
+                        self.command(data,sock)
+                    else:
+                        [self.tuple_db[True].pop(self.tuple_db[True].index(x)) for x in self.tuple_db[True] if x[1] == sock]
+                        for qry in self.tuple_db[True]:
+                            idx = self.tuple_db[True].index(qry)
+                            if sock in qry:
+                                self.tuple_db[True].pop(idx)
+                        del self.connections[sock]
+                        sock.close()
+
+                    '''
                     try:
                         data = self.xrcv(sock)
                         self.command(data,sock)
+
                     except:
                         print( "client lost")
                         [self.tuple_db[True].pop(self.tuple_db[True].index(x)) for x in self.tuple_db[True] if x[1] == sock]
@@ -87,6 +102,7 @@ class server(object):
                                 self.tuple_db[True].pop(idx)
                         del self.connections[sock]
                         sock.close()
+
                     self.report()
 
         # shutdown server
@@ -96,17 +112,16 @@ class server(object):
             self.server_socket.close()
 
     def xmit(self,sock,msg):
-        print('xmit')
+        # print('xmit')
         sock.send(msg)
         sock.recv(2)
-        print('/xmit')
+        # print('/xmit')
 
     def xrcv(self,sock):
-        print('xrcv')
+        # print('xrcv')
         data = sock.recv(self.recv_buffer)
-
         sock.send('ok')
-        print('/xrcv')
+        # print('/xrcv')
         return data
 
     def shutdown(self):
@@ -124,13 +139,11 @@ class server(object):
         self.xmit(sock,pickle.dumps(term))
 
     def command(self, pickle_data, sock):
-        print('command' )
-
-        print(0,'any any', _)
-        print(1,'any dt', dt)
-
+        # print('command', pickle_data )
+        # time.sleep(2)
         query_flag, block_flag, erase_flag, data = pickle.loads(pickle_data)
-        print('command view:', query_flag, block_flag, erase_flag, data)
+
+        print('command view:', query_flag, block_flag, erase_flag)
 
         '''
         Q   B   E   CMD
@@ -149,24 +162,23 @@ class server(object):
         search = not(query_flag) # inverse boolean
         print(search)
         if query_flag:
-            print('query!')
+            # print('query!')
             if data in self.tuple_db[search]:
                 #idx,msg = [(i,x) for i,x in enumerate(self.tuple_db[search]) if data == x][0]
                 found = [x for x in self.tuple_db[search] if data == x][0]
                 idx = self.tuple_db[search].index(found)
                 msg = self.tuple_db[search][idx]
-
                 if erase_flag:
-                    self.tuple_db[search].pop[idx]
+                    self.tuple_db[search].pop(idx)
                 self.reply(sock,msg)
             else:
-                if block:
+                if block_flag:
                     self.tuple_db[query_flag].append((sock,data))
                 else:
                     self.reply(sock,False)
 
         else:   # not a query means post to tupelspace
-            print('post!')
+            # print('post!')
             packet = (_,data)
             for qry in self.tuple_db[search]:
                 if qry == packet:

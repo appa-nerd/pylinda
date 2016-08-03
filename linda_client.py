@@ -44,15 +44,16 @@ class client(object):
         broadcast.sendto(__main__.__file__, cast)
 
         try:
-            (Something,server) = broadcast.recvfrom(self.recv_buffer)
+            (svr_hostname,svr_port) = broadcast.recvfrom(self.recv_buffer)
         except:
             print "no server"
             sys.exit()
 
         broadcast.close()
 
-
-        self.attach( server[0], server[1])
+        print('server says', svr_hostname,svr_port)
+        # self.attach( svr_port[0], svr_port[1])
+        self.attach( svr_hostname, svr_port[1])
         return self
 
     def attach(self,svr_host,svr_port):
@@ -86,26 +87,37 @@ class client(object):
         return self.receive()
 
     def read(self, qry_message, block=True, erase=False):
+        # print('read')
         self.reply(True,block,erase,qry_message)
+        # print('/read')
         return self.receive()
 
     def reply(self, query, block, erase, payload):
+        # print('reply')
         pickled_payload = pickle.dumps((query,block,erase,payload))
         self.xmit(self.sock, pickled_payload)
+        # print('/reply')
 
     def receive(self):
+        # print('receive')
         try:
             return pickle.loads(self.xrcv(self.sock))
         except:
             print( "server isn't speaking to us!" )
+        # print('/receive')
 
     def xmit(self, sock, message):
+        # print('xmit')
         sock.send(message)
         sock.recv(2)    # token reply, flushes buffer
+        # print '/xmit'
 
     def xrcv(self, sock):
+        # print('xrcv', self.recv_buffer)
         data = sock.recv(self.recv_buffer)
+        # print(data)
         sock.send('ok')
+        # print('/xrcv')
         return data
 
 
@@ -120,10 +132,15 @@ if __name__ == "__main__":
         port = sys.argv[1]
     else:
         port = default_port
-
+    print('hello')
     cfd = client(PORT=port).auto_connect()
-    cfd.post('hello')
-    print(cfd.pull('hello'))
+    print 0
+    cfd.post((1,2,3,'hello'))
+    print 5
+
+    x = cfd.read((1,2,3,_))
+    print('goodbye', x)
+    # print(cfd.read('hello'))
 
 
 """------------------------------------------------------------*

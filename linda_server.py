@@ -9,6 +9,9 @@ import select
 import __main__
 import datetime
 
+from any import Any
+_ = Any(Any)
+dt = Any(datetime.datetime)
 """------------------------------------------------------------*
     Declare
 #------------------------------------------------------------"""
@@ -23,6 +26,8 @@ class server(object):
     def __init__(self,PORT=default_port):
         self.recv_buffer = default_buff
         self.auto_port = int(PORT)
+        self.server_port = 1309
+        # self.server_addr = ("0.0.0.0", self.server_port)
         self.auto_addr = ("0.0.0.0", self.auto_port)
         self.host = socket.gethostname()
         self.local = socket.gethostbyname(self.host)
@@ -40,8 +45,9 @@ class server(object):
     def setup(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
-        print('server_addr', self.auto_port )
+
         self.server_socket.bind((self.host,self.auto_port))
+        # self.server_socket.bind(self.server_addr)
         self.server_socket.listen(10)
 
         self.auto_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -54,22 +60,21 @@ class server(object):
     def service(self):
         self.report()
         while self.activate:
-            print(self.connections.values())
+            # print(self.connections.values())
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
             for sock in read_list:
                 print('+'*10)
-                print(sock,self.auto_socket,self.server_socket)
+                # print(sock,self.auto_socket,self.server_socket)
                 if sock == self.auto_socket:    #broadcast socket
-                    print(sock,self.auto_socket)
                     (process_name,fd) = sock.recvfrom(self.recv_buffer)
-                    print(process_name,fd)
-                    sock.sendto(str(self.auto_port),fd)
+                    print('broadcast from', process_name,fd)
+                    sock.sendto(self.host,fd)
                 elif sock == self.server_socket:
                     # (process_name,fd) = sock.recvfrom(self.recv_buffer)
                     sockfd, addr = self.server_socket.accept()
-                    self.connections[sockfd] = (self.now, addr, process_name)
+                    print('connection from:', sockfd,addr)
+                    self.connections[sockfd] = (addr, process_name)
                 else:
-                    print 3
                     try:
                         data = self.xrcv(sock)
                         self.command(data,sock)
@@ -91,12 +96,17 @@ class server(object):
             self.server_socket.close()
 
     def xmit(self,sock,msg):
+        print('xmit')
         sock.send(msg)
         sock.recv(2)
+        print('/xmit')
 
     def xrcv(self,sock):
+        print('xrcv')
         data = sock.recv(self.recv_buffer)
+
         sock.send('ok')
+        print('/xrcv')
         return data
 
     def shutdown(self):
@@ -114,10 +124,13 @@ class server(object):
         self.xmit(sock,pickle.dumps(term))
 
     def command(self, pickle_data, sock):
-        _ = Any(Any)
-        dt = Any(datetime.datetime)
+        print('command' )
+
+        print(0,'any any', _)
+        print(1,'any dt', dt)
 
         query_flag, block_flag, erase_flag, data = pickle.loads(pickle_data)
+        print('command view:', query_flag, block_flag, erase_flag, data)
 
         '''
         Q   B   E   CMD
@@ -127,13 +140,16 @@ class server(object):
         T   F   T   Take message from tuplespace, else return false
         T   F   F   Peek message if found, else return false
         '''
-        if query == "shutdown":
+
+        if query_flag == "shutdown":
+            print('shutdown')
             self.shutdown()
             return
 
-        search = not(query) # inverse boolean
-
+        search = not(query_flag) # inverse boolean
+        print(search)
         if query_flag:
+            print('query!')
             if data in self.tuple_db[search]:
                 #idx,msg = [(i,x) for i,x in enumerate(self.tuple_db[search]) if data == x][0]
                 found = [x for x in self.tuple_db[search] if data == x][0]
@@ -150,6 +166,7 @@ class server(object):
                     self.reply(sock,False)
 
         else:   # not a query means post to tupelspace
+            print('post!')
             packet = (_,data)
             for qry in self.tuple_db[search]:
                 if qry == packet:
@@ -158,6 +175,7 @@ class server(object):
                     self.reply(send,data)
                     return
             self.tuple_db[query_flag].append(data)
+
     def report(self):
         if self.debug:
             for key in self.tuple_db:

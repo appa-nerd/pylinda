@@ -15,6 +15,7 @@ from any import Any
 #------------------------------------------------------------"""
 default_port = 21643
 default_buff = 65536
+default_buff = 1024
 max_buffer_len = 7
 _ = Any(Any)
 """------------------------------------------------------------*
@@ -51,8 +52,6 @@ class client(object):
 
         broadcast.close()
 
-        print('server says', svr_hostname,svr_port)
-        # self.attach( svr_port[0], svr_port[1])
         self.attach( svr_hostname, svr_port[1])
         return self
 
@@ -65,20 +64,6 @@ class client(object):
     def wait(self,query,timeout):
         self.sock.setttimeout(timeout)
 
-    def check(self,query,timeout):
-        clock = 0
-        interval = 6
-        while clock < timeout:
-            print()
-            clock += interval
-            time.sleep(interval)
-            if not self.read(query, block=False):
-                print("Message was processed")
-                return True
-        self.pull(query)
-        print("Message Timed out!")
-        return False
-
     def post(self,message):
         return self.reply(False,_,_,message)
 
@@ -87,40 +72,20 @@ class client(object):
         return self.receive()
 
     def read(self, qry_message, block=True, erase=False):
-        # print('read')
         self.reply(True,block,erase,qry_message)
-        # print('/read')
         return self.receive()
 
     def reply(self, query, block, erase, payload):
-        # print('reply')
-        # print(payload)
         pickled_payload = pickle.dumps((query,block,erase,payload))
-        self.xmit(self.sock, pickled_payload)
-        # print('/reply')
+        self.sock.send(pickled_payload)
 
     def receive(self):
-        # print('receive')
         try:
-            return pickle.loads(self.xrcv(self.sock))
+            data = self.sock.recv(self.recv_buffer)
+            return pickle.loads(data)
         except:
             print( "server isn't speaking to us!" )
-        # print('/receive')
 
-    def xmit(self, sock, message):
-        # print('xmit')
-        # print(message)
-        sock.send(message)
-        sock.recv(2)    # token reply, flushes buffer
-        # print '/xmit'
-
-    def xrcv(self, sock):
-        # print('xrcv', self.recv_buffer)
-        data = sock.recv(self.recv_buffer)
-        # print(data)
-        sock.send('ok')
-        # print('/xrcv')
-        return data
 
 
 """------------------------------------------------------------*

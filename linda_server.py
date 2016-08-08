@@ -77,7 +77,8 @@ class server(object):
                     self.connections[sockfd] = (addr, process_name)
                 else:
                     try:
-                        data = self.receive(sock)
+                        data = self.recv(sock)
+                        print data
                         self.command(data,sock)
 
                     except:
@@ -90,7 +91,7 @@ class server(object):
                         del self.connections[sock]
                         sock.close()
 
-                    # self.report()
+                    self.report()
 
         # shutdown server
         for x in self.connections:
@@ -102,18 +103,19 @@ class server(object):
     def reply(self,sock,term):
         sock.send(pickle.dumps(term))
 
-    def recieve(self,sock):
-        # print('xrcv')
-        # data = sock.recv(self.recv_buffer)
-        # return data
-        total_data = []
+    def recv_basic(self,the_socket):
+        total_data=[]
         while True:
-            data = sock.recv(self.recv_buffer)
-            if not data:
+            data = the_socket.recv(64)
+            if not data: 
+                print data
                 break
             total_data.append(data)
-        # print('/xrcv')
         return ''.join(total_data)
+
+    def recv(self,sock):
+        self.recv_basic(sock)
+
 
     def shutdown(self):
         self.activate = False
@@ -130,7 +132,13 @@ class server(object):
 
     def command(self, pickle_data, sock):
 
-        query_flag, block_flag, erase_flag, data = pickle.loads(pickle_data)
+        ( data,
+        query_flag,
+        block_flag,
+        erase_flag,
+        multi_flag )= pickle.loads(pickle_data)
+
+        print(multi_flag)
         '''
         Q   B   E   CMD
         F   -   -   Post message to tuplesapce
@@ -148,6 +156,7 @@ class server(object):
         search = not(query_flag) # inverse boolean
         # print(search)
         if query_flag:
+            print(1)
             tic = time.time()
             # print('query!')
             if data in self.tuple_db[search]:
@@ -165,9 +174,9 @@ class server(object):
                 else:
                     self.reply(sock,False)
                     x = time.time() - tic
+                    print(x)
         else:   # not a query means post to tupelspace
             # print('post!')
-            tic = time.time()
             packet = (_,data)
             for data in self.tuple_db[search]:
                 if data == packet:
@@ -176,7 +185,8 @@ class server(object):
                     self.reply(send,data)
                     return
             self.tuple_db[query_flag].append(data)
-            x = time.time() - tic
+
+
 
 
     def report(self):

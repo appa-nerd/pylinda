@@ -51,7 +51,8 @@ class server(object):
         # self.server_socket.bind(self.server_addr)
         self.server_socket.listen(10)
 
-        self.auto_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.auto_socket = socket.socket(socket.AF_INET, # internet
+                                            socket.SOCK_STREAM) # TCP : socket.SOCK_DGRAM) # UDP
         print('auto addr', self.auto_addr)
         self.auto_socket.bind(self.auto_addr)
 
@@ -67,9 +68,10 @@ class server(object):
                 if sock == self.auto_socket:    #broadcast socket
                     (process_name,fd) = sock.recvfrom(self.recv_buffer)
                     sock.sendto(self.host,fd)
-                elif sock == self.server_socket:
+                elif sock == self.server_socket:    # connection request
                     client, addr = self.server_socket.accept()
-                    self.connections[client] = (addr, process_name)
+                    #self.connections[client] = (addr, process_name)
+                    self.connections[client] = addr   # the process_name isn't going to be accurate, addr isn't used :(
                 else:
                     try:
                         data = self.recv(sock)  # recieve method!
@@ -94,9 +96,11 @@ class server(object):
 
 
     def reply(self,sock,term):
-        sock.send(pickle.dumps(term))
-
+        sock.send(pickle.dumps(term))      # TCP or UDP?
+        
+        
     def recv_basic(self,the_socket):
+        # trying a variable form of data length...
         total_data=[]
         while True:
             data = the_socket.recv(64)
@@ -105,8 +109,8 @@ class server(object):
         return ''.join(total_data)
 
     def recv(self,sock):
-        return sock.recv(default_buff)
-        #return self.recv_basic(sock)
+        return sock.recv(default_buff)     # TCP or UDP?
+        
 
 
     def shutdown(self):

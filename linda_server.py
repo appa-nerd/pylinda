@@ -17,8 +17,8 @@ dt = Any(datetime.datetime)
 #------------------------------------------------------------"""
 default_port = 21643
 default_buff = 65536
-default_buff = 1024
-max_buffer_len = 7
+#default_buff = 1024
+max_buffer_len = 256
 
 """------------------------------------------------------------*
     Classes
@@ -32,7 +32,7 @@ class server(object):
         self.auto_addr = ("0.0.0.0", self.auto_port)
         self.host = socket.gethostname()
         self.local = socket.gethostbyname(self.host)
-        self.debug = True
+        self.debug = False
         self.tuple_db = {True:[], False:[]}
         self.connections = {}
         self.setup()
@@ -64,25 +64,19 @@ class server(object):
             # print(self.connections.values())
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
             for sock in read_list:
-                # print('+'*10)
-                # print(sock,self.auto_socket,self.server_socket)
                 if sock == self.auto_socket:    #broadcast socket
                     (process_name,fd) = sock.recvfrom(self.recv_buffer)
-                    # print('broadcast from', process_name,fd)
                     sock.sendto(self.host,fd)
                 elif sock == self.server_socket:
-                    # (process_name,fd) = sock.recvfrom(self.recv_buffer)
-                    sockfd, addr = self.server_socket.accept()
-                    # print('connection from:', sockfd,addr)
-                    self.connections[sockfd] = (addr, process_name)
+                    client, addr = self.server_socket.accept()
+                    self.connections[client] = (addr, process_name)
                 else:
                     try:
-                        data = self.recv(sock)
-                        print data
+                        data = self.recv(sock)  # recieve method!
                         self.command(data,sock)
 
-                    except:
-                        print( "client lost")
+                    except Exception as exception:
+                        print( "Exception: %s" % exception)
                         [self.tuple_db[True].pop(self.tuple_db[True].index(x)) for x in self.tuple_db[True] if x[1] == sock]
                         for qry in self.tuple_db[True]:
                             idx = self.tuple_db[True].index(qry)
@@ -90,8 +84,7 @@ class server(object):
                                 self.tuple_db[True].pop(idx)
                         del self.connections[sock]
                         sock.close()
-
-                    self.report()
+            self.report()
 
         # shutdown server
         for x in self.connections:
@@ -107,14 +100,13 @@ class server(object):
         total_data=[]
         while True:
             data = the_socket.recv(64)
-            if not data: 
-                print data
-                break
+            if not data: break
             total_data.append(data)
         return ''.join(total_data)
 
     def recv(self,sock):
-        self.recv_basic(sock)
+        return sock.recv(default_buff)
+        #return self.recv_basic(sock)
 
 
     def shutdown(self):
@@ -127,18 +119,16 @@ class server(object):
         else:
             return False, None
 
-
-
-
     def command(self, pickle_data, sock):
-
+        data_load = pickle.loads(pickle_data)
         ( data,
         query_flag,
         block_flag,
         erase_flag,
-        multi_flag )= pickle.loads(pickle_data)
+        multi_flag ) = data_load
 
-        print(multi_flag)
+        # print(data_load)
+
         '''
         Q   B   E   CMD
         F   -   -   Post message to tuplesapce
@@ -156,25 +146,25 @@ class server(object):
         search = not(query_flag) # inverse boolean
         # print(search)
         if query_flag:
-            print(1)
             tic = time.time()
             # print('query!')
             if data in self.tuple_db[search]:
+
                 #idx,msg = [(i,x) for i,x in enumerate(self.tuple_db[search]) if data == x][0]
                 found = [x for x in self.tuple_db[search] if data == x][0]
+                print(found)
                 idx = self.tuple_db[search].index(found)
                 msg = self.tuple_db[search][idx]
                 if erase_flag:
                     self.tuple_db[search].pop(idx)
                 self.reply(sock,msg)
             else:
-
+                # print(data)
                 if block_flag:
                     self.tuple_db[query_flag].append((sock,data))
                 else:
                     self.reply(sock,False)
                     x = time.time() - tic
-                    print(x)
         else:   # not a query means post to tupelspace
             # print('post!')
             packet = (_,data)
@@ -185,6 +175,7 @@ class server(object):
                     self.reply(send,data)
                     return
             self.tuple_db[query_flag].append(data)
+        self.report()
 
 
 
@@ -200,9 +191,10 @@ class server(object):
                 for record in self.tuple_db[key]:
                     print("|\t%s" %(str(record)[:100]))
             print("-\_" + '_'*50)
-        for x in self.connections:
-            addr, p = self.connections[x]
-            print("|\t%s [%s]" % (p,addr))
+            for x in self.connections:
+                addr, p = self.connections[x]
+                print("|\t%s [%s]" % (p,addr))
+        print(len(self.connections))
 """------------------------------------------------------------*
     Main
 #------------------------------------------------------------"""

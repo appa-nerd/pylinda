@@ -65,17 +65,18 @@ class client(object):
         self.sock.setttimeout(timeout)
 
     def post(self,message):
-        return self.reply(False,_,_,message)
+        return self.reply(message,False,_,_,_)
 
     def pull(self, qry_message, block=True, erase=True, multi=False):
-        self.reply(True, qry_message,block,erase,multi)
+        self.reply(qry_message,True,block,erase,multi)
         return self.receive()
 
     def read(self, qry_message, block=True, erase=False, multi=False):
-        self.reply(True,qry_message,block,erase,multi)
+        self.reply(qry_message,True,block,erase,multi)
         return self.receive()
 
     def reply(self, *args):
+        # Message, Query_flag, block_flag, erase_flag, multi_flag
         pickled_payload = pickle.dumps((args))
         self.sock.send(pickled_payload)
 

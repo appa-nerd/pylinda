@@ -40,7 +40,7 @@ class client(object):
     def auto_connect(self):
         cast = ('<broadcast>', self.auto_port)
         broadcast = socket.socket(socket.AF_INET, 
-                                    socket.SOCK_STREAM) # socket.SOCK_DGRAM)
+                                    socket.SOCK_DGRAM) #socket.SOCK_STREAM) # 
         broadcast.settimeout(2)
         broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
         broadcast.sendto(__main__.__file__, cast)

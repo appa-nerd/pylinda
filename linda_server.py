@@ -76,9 +76,9 @@ class server(object):
                     try:
                         data = self.recv(sock)  # recieve method!
                         self.command(data,sock)
-
-                    except Exception as exception:
-                        print( "Exception: %s" % exception)
+                    except Exception as msg:
+                    #except Exception as exception:
+                        print( "Socket Error: %s" % msg)
                         [self.tuple_db[True].pop(self.tuple_db[True].index(x)) for x in self.tuple_db[True] if x[1] == sock]
                         for qry in self.tuple_db[True]:
                             idx = self.tuple_db[True].index(qry)

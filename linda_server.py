@@ -117,30 +117,16 @@ class server(object):
             return [(self.tuple_db[db_name].index(x),x) for x in self.tuple_db[db_name] if match == x] # [(idx,msg),]
 
     def command(self, pickle_data, sock):
-        data_load = pickle.loads(pickle_data)
-        ( data,
-        query_flag,
-        block_flag,
-        erase_flag,
-        multi_flag ) = data_load
-
-        # print(data_load)
-
         '''
-        Q   B   E   M   CMD
-        F   -   -   ?   POST message to tuplesapce
-        T   T   T   ?   PULL message from tuplespace, and remove
-        T   T   F   ?   READ message from tuplespace, do not remove
-        T   F   T   ?   PULL message from tuplespace, else return false
-        T   F   F   ?   READ message if found, else return false
-        
-        (data, type, socket)
+        (data, linda_cmd)
         POST
         IN_B    (blocking)
         IN_N    (non-blocking)
         RD_B
         RD_N
         '''
+        data, linda_cmd = pickle.loads(pickle_data)
+
         if linda_cmd == "shutdown":
             print('shutdown')
             self.shutdown()
@@ -148,8 +134,9 @@ class server(object):
 
         if linda_cmd == 'POST':
             found = self.search_db('BLOCK',data)
+            block_idx, return_data = found[0]
             if found:
-                send, msg = self.tuple_db['BLOCK'].pop(found[0][0]) # found[0][0] --> index
+                send, msg = self.tuple_db['BLOCK'].pop(block_idx) # found[0][0] --> index
                 self.reply(send,data)
             else:
                 self.tuple_db['POST'].append(data)
@@ -158,9 +145,10 @@ class server(object):
         if linda_cmd == 'IN_B':
             # Pull in, Blocking
             found = self.search_db('POST', data)
+            post_idx, return_data = found[0]
             if found:
-                self.reply(found[0][1]) # found[0][1] --> 
-                self.tuple_db['POST'].pop(found[0][0])
+                self.reply(return_data) # found[0][1] --> 
+                self.tuple_db['POST'].pop(post_idx)
             else:
                 self.tuple_db['BLOCK'].append((sock,data))
             return
@@ -168,9 +156,10 @@ class server(object):
         if linda_cmd == 'IN_N':
             # Pull in, Non-blocking
             found = self.search_db('POST', data)
+            post_idx, return_data = found[0]
             if found:
-                self.reply(found[0][1])
-                self.tuple_db['POST'].pop(found[0][0])
+                self.reply(return_data)
+                self.tuple_db['POST'].pop(post_idx)
             else:
                 self.reply(sock,False)
             return
@@ -178,9 +167,9 @@ class server(object):
         if linda_cmd == 'RD_B':
             # Read, Blocking
             found = self.search_db('POST', data)
+            post_idx, return_data = found[0]
             if found:
-                self.reply(found[0][1])
-                return
+                self.reply(return_data)
             else:
                 self.tuple_db['BLOCK'].append((sock,data))
             return
@@ -188,50 +177,13 @@ class server(object):
         if linda_cmd == 'RD_N':
             # Read, Non-blocking
             found = self.search_db('POST', data)
+            post_idx, return_data = found[0]
             if found:
-                self.reply(found[0][1])
-                
+                self.reply(return_data)
             else:
                 self.reply(sock,False)
             return
-        
-            
-        search = not(query_flag) # inverse boolean
-        # print(search)
-        if query_flag:
-            tic = time.time()
-            # print('query!')
-            if data in self.tuple_db[search]:
-
-                #idx,msg = [(i,x) for i,x in enumerate(self.tuple_db[search]) if data == x][0]
-                found = [x for x in self.tuple_db[search] if data == x][0]
-                print(found)
-                idx = self.tuple_db[search].index(found)
-                msg = self.tuple_db[search][idx]
-                if erase_flag:
-                    self.tuple_db[search].pop(idx)
-                self.reply(sock,msg)
-            else:
-                # print(data)
-                if block_flag:
-                    self.tuple_db[query_flag].append((sock,data))
-                else:
-                    self.reply(sock,False)
-                    x = time.time() - tic
-        else:   # not a query means post to tupelspace
-            # print('post!')
-            packet = (_,data)
-            for data in self.tuple_db[search]:
-                if data == packet:
-                    idx = self.tuple_db[search].index(data)
-                    send,msg = self.tuple_db[search].pop(idx)
-                    self.reply(send,data)
-                    return
-            self.tuple_db[query_flag].append(data)
         self.report()
-
-
-
 
     def report(self):
         if self.debug:

@@ -39,7 +39,8 @@ class client(object):
 
     def auto_connect(self):
         cast = ('<broadcast>', self.auto_port)
-        broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        broadcast = socket.socket(socket.AF_INET, 
+                                    socket.SOCK_STREAM) # socket.SOCK_DGRAM)
         broadcast.settimeout(2)
         broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
         broadcast.sendto(__main__.__file__, cast)
@@ -56,7 +57,7 @@ class client(object):
         return self
 
     def attach(self,svr_host,svr_port):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)   # TCP....
         print("connect: %s :%s" % (svr_host, svr_port))
         self.sock.connect((svr_host, svr_port))
         return self.sock

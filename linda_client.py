@@ -66,15 +66,23 @@ class client(object):
         self.sock.setttimeout(timeout)
 
     def post(self,message):
-        return self.reply(message,False,_,_,_)
+        return self.reply(message,'POST')
 
-    def pull(self, qry_message, block=True, erase=True, multi=False):
-        self.reply(qry_message,True,block,erase,multi)
+    def in_b(self,message):
+        self.reply(message,'IN_B')
         return self.receive()
-
-    def read(self, qry_message, block=True, erase=False, multi=False):
-        self.reply(qry_message,True,block,erase,multi)
+        
+    def in_n(self,message):
+        self.reply(message,'IN_N')
         return self.receive()
+    
+    def rd_b(self,message):
+        self.reply(message,'RD_B')
+        return self.receive()
+    
+    def rd_n(self,message):
+        self.reply(message,'RD_N')
+        return self.receive()    
 
     def reply(self, *args):
         # Message, Query_flag, block_flag, erase_flag, multi_flag
@@ -85,8 +93,8 @@ class client(object):
         try:
             data = self.sock.recv(self.recv_buffer)
             return pickle.loads(data)
-        except:
-            print( "server isn't speaking to us!" )
+        except socket.error as err:
+            print( "server isn't speaking to us!: %s" % err )
 
 
 

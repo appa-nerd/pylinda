@@ -27,13 +27,13 @@ class server(object):
     def __init__(self,PORT=default_port):
         self.recv_buffer = default_buff
         self.auto_port = int(PORT)
-        self.server_port = 1309
+        # self.server_port = 1309
         # self.server_addr = ("0.0.0.0", self.server_port)
         self.auto_addr = ("0.0.0.0", self.auto_port)
         self.host = socket.gethostname()
         self.local = socket.gethostbyname(self.host)
         self.debug = False
-        self.tuple_db = {True:[], False:[]}
+        self.tuple_db = {'BLOCK':[], 'POST':[]}
         self.connections = {}
         self.setup()
         self.activate = True
@@ -47,12 +47,12 @@ class server(object):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
 
-        self.server_socket.bind((self.host,self.auto_port))
-        # self.server_socket.bind(self.server_addr)
-        self.server_socket.listen(10)
+        #self.server_socket.bind((self.host,self.auto_port))    # use the hostname :(
+        self.server_socket.bind((self.local,self.auto_port))    # use the ip address :)
+        self.server_socket.listen(socket.SOMAXCONN)   # might be important, but it appears the clients are connecting fine.
 
         self.auto_socket = socket.socket(socket.AF_INET, # internet
-                                            socket.SOCK_STREAM) # TCP : socket.SOCK_DGRAM) # UDP
+                                            socket.SOCK_DGRAM) # UDP # socket.SOCK_STREAM) # TCP : 
         print('auto addr', self.auto_addr)
         self.auto_socket.bind(self.auto_addr)
 
@@ -64,6 +64,7 @@ class server(object):
         while self.activate:
             # print(self.connections.values())
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
+            print(len(read_list), len(write_list), len(exe_list))   # are there write list entries?
             for sock in read_list:
                 if sock == self.auto_socket:    #broadcast socket
                     (process_name,fd) = sock.recvfrom(self.recv_buffer)
@@ -97,21 +98,9 @@ class server(object):
 
     def reply(self,sock,term):
         sock.send(pickle.dumps(term))      # TCP or UDP?
-        
-        
-    def recv_basic(self,the_socket):
-        # trying a variable form of data length...
-        total_data=[]
-        while True:
-            data = the_socket.recv(64)
-            if not data: break
-            total_data.append(data)
-        return ''.join(total_data)
 
     def recv(self,sock):
         return sock.recv(default_buff)     # TCP or UDP?
-        
-
 
     def shutdown(self):
         self.activate = False
@@ -122,6 +111,10 @@ class server(object):
             return True, database.pop(database.index(m[0]))
         else:
             return False, None
+    
+    def search_db(self, db_name, match):
+        if match in self.tuple_db[db_name]:
+            return [(self.tuple_db[db_name].index(x),x) for x in self.tuple_db[db_name] if match == x] # [(idx,msg),]
 
     def command(self, pickle_data, sock):
         data_load = pickle.loads(pickle_data)
@@ -134,19 +127,75 @@ class server(object):
         # print(data_load)
 
         '''
-        Q   B   E   CMD
-        F   -   -   Post message to tuplesapce
-        T   T   T   Pull message from tuplespace, and remove
-        T   T   F   Read message from tuplespace, do not remove
-        T   F   T   Take message from tuplespace, else return false
-        T   F   F   Peek message if found, else return false
+        Q   B   E   M   CMD
+        F   -   -   ?   POST message to tuplesapce
+        T   T   T   ?   PULL message from tuplespace, and remove
+        T   T   F   ?   READ message from tuplespace, do not remove
+        T   F   T   ?   PULL message from tuplespace, else return false
+        T   F   F   ?   READ message if found, else return false
+        
+        (data, type, socket)
+        POST
+        IN_B    (blocking)
+        IN_N    (non-blocking)
+        RD_B
+        RD_N
         '''
-
-        if query_flag == "shutdown":
+        if linda_cmd == "shutdown":
             print('shutdown')
             self.shutdown()
             return
 
+        if linda_cmd == 'POST':
+            found = self.search_db('BLOCK',data)
+            if found:
+                send, msg = self.tuple_db['BLOCK'].pop(found[0][0]) # found[0][0] --> index
+                self.reply(send,data)
+            else:
+                self.tuple_db['POST'].append(data)
+            return
+        
+        if linda_cmd == 'IN_B':
+            # Pull in, Blocking
+            found = self.search_db('POST', data)
+            if found:
+                self.reply(found[0][1]) # found[0][1] --> 
+                self.tuple_db['POST'].pop(found[0][0])
+            else:
+                self.tuple_db['BLOCK'].append((sock,data))
+            return
+
+        if linda_cmd == 'IN_N':
+            # Pull in, Non-blocking
+            found = self.search_db('POST', data)
+            if found:
+                self.reply(found[0][1])
+                self.tuple_db['POST'].pop(found[0][0])
+            else:
+                self.reply(sock,False)
+            return
+
+        if linda_cmd == 'RD_B':
+            # Read, Blocking
+            found = self.search_db('POST', data)
+            if found:
+                self.reply(found[0][1])
+                return
+            else:
+                self.tuple_db['BLOCK'].append((sock,data))
+            return
+        
+        if linda_cmd == 'RD_N':
+            # Read, Non-blocking
+            found = self.search_db('POST', data)
+            if found:
+                self.reply(found[0][1])
+                
+            else:
+                self.reply(sock,False)
+            return
+        
+            
         search = not(query_flag) # inverse boolean
         # print(search)
         if query_flag:

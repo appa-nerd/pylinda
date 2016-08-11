@@ -15,7 +15,7 @@ from any import Any
 #------------------------------------------------------------"""
 default_port = 21643
 default_buff = 65536
-default_buff = 1024
+# default_buff = 1024
 max_buffer_len = 7
 _ = Any(Any)
 """------------------------------------------------------------*
@@ -39,8 +39,8 @@ class client(object):
 
     def auto_connect(self):
         cast = ('<broadcast>', self.auto_port)
-        broadcast = socket.socket(socket.AF_INET, 
-                                    socket.SOCK_DGRAM) #socket.SOCK_STREAM) # 
+        broadcast = socket.socket(socket.AF_INET,
+                                    socket.SOCK_DGRAM) #socket.SOCK_STREAM) #
         broadcast.settimeout(2)
         broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
         broadcast.sendto(__main__.__file__, cast)
@@ -71,18 +71,18 @@ class client(object):
     def in_b(self,message):
         self.reply(message,'IN_B')
         return self.receive()
-        
+
     def in_n(self,message):
         self.reply(message,'IN_N')
         return self.receive()
-    
+
     def rd_b(self,message):
         self.reply(message,'RD_B')
         return self.receive()
-    
+
     def rd_n(self,message):
         self.reply(message,'RD_N')
-        return self.receive()    
+        return self.receive()
 
     def reply(self, *args):
         # Message, Query_flag, block_flag, erase_flag, multi_flag

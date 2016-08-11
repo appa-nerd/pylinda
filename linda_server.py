@@ -60,44 +60,37 @@ class server(object):
         self.connections[self.server_socket] = (self.host, 'server_socket')
         self.connections[self.auto_socket] = (self.host, 'auto_socket')
 
+    def deregister(self, sock):
+        [self.tuple_db['BLOCK'].pop(self.tuple_db['BLOCK'].index(x)) for x in self.tuple_db['BLOCK'] if x[1] == sock]
+        del self.connections[sock]
+        sock.close()
+
     def service(self):
         while self.activate:
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
             # self.report()
             for sock in read_list:
-
-                # print(1)
                 if sock == self.auto_socket:    #broadcast socket
 
                     (process_name,fd) = sock.recvfrom(self.recv_buffer)
-                    # print(2, process_name)
                     sock.sendto(self.host,fd)
                 elif sock == self.server_socket:    # connection request
 
                     client, addr = self.server_socket.accept()
-                    # print(3, addr)
                     self.connections[client] = (addr, process_name)
-                    #self.connections[client] = addr   # the process_name isn't going to be accurate, addr isn't used :(
                 else: #if sock:
-                    # print(4,sock)
                     try:
                         data = self.recv(sock)  # recieve method!
-                        # print(pickle.loads(data))
-                        if data:
-                            self.command(data,sock)
-                        # print('xyz')
+                        # if data:
+                        self.command(data,sock)
                     except Exception as msg:
-                    #except Exception as exception:
                         print( "Socket Error: %s" % msg)
-                        print( pickle.loads(data) )
-                        [self.tuple_db['BLOCK'].pop(self.tuple_db['BLOCK'].index(x)) for x in self.tuple_db['BLOCK'] if x[1] == sock]
-                        for qry in self.tuple_db['BLOCK']:
-                            idx = self.tuple_db['BLOCK'].index(qry)
-                            if sock in qry:
-                                self.tuple_db['BLOCK'].pop(idx)
-                        del self.connections[sock]
+                        self.deregister(sock)
                         sock.close()
-                self.report()
+                    # self.report()
+                    self.report()
+
+
 
         # shutdown server
         for x in self.connections:
@@ -115,16 +108,22 @@ class server(object):
     def shutdown(self):
         self.activate = False
 
-    def match(self, query, database):
-        m = [record for record in database if (query in record)]
-        if len(m) > 0:
-            return True, database.pop(database.index(m[0]))
-        else:
-            return False, None
+    def search_db(self, DB, match):
+        found = [(self.tuple_db[DB].index(x),x) for x in self.tuple_db[DB] if match in x]
 
-    def search_db(self, db_name, match):
-        if match in self.tuple_db[db_name]:
-            return [(self.tuple_db[db_name].index(x),x) for x in self.tuple_db[db_name] if match == x] # [(idx,msg),]
+        if found:
+            idx, store = found[0]
+            socket, data = store
+            # print('-'*10)
+            # print(found[0])
+            # print('+'*10)
+            return (idx,data,socket)
+        else:
+            return False
+
+        # if match in self.tuple_db[DB]:
+        #     return [(self.tuple_db[db_name].index(x),x) for x in self.tuple_db[db_name] if match == x] # [(idx,msg),]
+
 
     def command(self, pickle_data, sock):
         '''
@@ -144,20 +143,20 @@ class server(object):
         if linda_cmd == 'POST':
             found = self.search_db('BLOCK',data)
             if found:
-                block_idx, return_data = found[0]
-                send, msg = self.tuple_db['BLOCK'].pop(block_idx) # found[0][0] --> index
+                (block_idx, return_data, send) = found
+                self.tuple_db['BLOCK'].pop(block_idx) # found[0][0] --> index
                 self.reply(send,data)
             else:
-                self.tuple_db['POST'].append(data)
+                self.tuple_db['POST'].append((sock,data))
             return
 
         if linda_cmd == 'IN_B':
             # Pull in, Blocking
             found = self.search_db('POST', data)
-            post_idx, return_data = found[0]
             if found:
-                self.reply(return_data) # found[0][1] -->
-                self.tuple_db['POST'].pop(post_idx)
+                (idx, return_data, s) = found
+                self.reply(sock,return_data) # found[0][1] -->
+                self.tuple_db['POST'].pop(idx)
             else:
                 self.tuple_db['BLOCK'].append((sock,data))
             return
@@ -165,9 +164,10 @@ class server(object):
         if linda_cmd == 'IN_N':
             # Pull in, Non-blocking
             found = self.search_db('POST', data)
-            post_idx, return_data = found[0]
+
             if found:
-                self.reply(return_data)
+                (block_idx, return_data,s) = found
+                self.reply(sock,return_data)
                 self.tuple_db['POST'].pop(post_idx)
             else:
                 self.reply(sock,False)
@@ -176,9 +176,10 @@ class server(object):
         if linda_cmd == 'RD_B':
             # Read, Blocking
             found = self.search_db('POST', data)
-            post_idx, return_data = found[0]
             if found:
-                self.reply(return_data)
+                (block_idx, return_data, s) = found
+                # print('found; %s : %s' % (block_idx, return_data))
+                self.reply(sock,return_data)
             else:
                 self.tuple_db['BLOCK'].append((sock,data))
             return
@@ -187,13 +188,11 @@ class server(object):
             # Read, Non-blocking
             found = self.search_db('POST', data)
             if found:
-                post_idx, return_data = found[0]
-                print(return_data)
+                (block_idx, return_data,s) = found
                 self.reply(return_data)
             else:
                 self.reply(sock,False)
             return
-        self.report()
 
     def report(self):
         if self.debug:
@@ -206,10 +205,12 @@ class server(object):
                 for record in self.tuple_db[key]:
                     print("|\t%s" %(str(record)[:100]))
             print("-\_" + '_'*50)
+            '''
             for x in self.connections:
                 addr, p = self.connections[x]
                 print("|\t%s [%s]" % (p,addr))
-        print(len(self.connections))
+            '''
+            print("Connection=%s" % len(self.connections))
 """------------------------------------------------------------*
     Main
 #------------------------------------------------------------"""

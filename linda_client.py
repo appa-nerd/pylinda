@@ -41,7 +41,7 @@ class client(object):
         cast = ('<broadcast>', self.auto_port)
         broadcast = socket.socket(socket.AF_INET,
                                     socket.SOCK_DGRAM) #socket.SOCK_STREAM) #
-        broadcast.settimeout(2)
+        broadcast.settimeout(5)
         broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
         broadcast.sendto(__main__.__file__, cast)
 
@@ -84,17 +84,17 @@ class client(object):
         self.reply(message,'RD_N')
         return self.receive()
 
-    def reply(self, *args):
-        # Message, Query_flag, block_flag, erase_flag, multi_flag
-        pickled_payload = pickle.dumps((args))
+    def reply(self, message, cmd):
+        pickled_payload = pickle.dumps((message,cmd))
         self.sock.send(pickled_payload)
 
     def receive(self):
-        try:
-            data = self.sock.recv(self.recv_buffer)
-            return pickle.loads(data)
-        except socket.error as err:
-            print( "server isn't speaking to us!: %s" % err )
+        data = self.sock.recv(self.recv_buffer)  # not blocking?
+        return pickle.loads(data)
+
+        # try:
+        # except socket.error as err:
+            # print( "server isn't speaking to us!: %s" % err )
 
 
 

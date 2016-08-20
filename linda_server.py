@@ -109,7 +109,15 @@ class server(object):
         self.activate = False
 
     def search_db(self, DB, match):
-        found = [(self.tuple_db[DB].index(x),x) for x in self.tuple_db[DB] if match in x]
+        # x <-- (sock,data)
+        if DB == 'POST':
+            found = [(self.tuple_db[DB].index(x),x) for x in self.tuple_db[DB] if match == x[1]]
+
+        if DB == 'BLOCK':
+            found = [(self.tuple_db[DB].index(x),x) for x in self.tuple_db[DB] if x[1] == match]
+            # print(123, match, found)
+            # for x in self.tuple_db[DB]:
+            #     print('aa',x[1], match == x[1], x[1] == match)
 
         if found:
             idx, store = found[0]
@@ -140,8 +148,10 @@ class server(object):
             self.shutdown()
             return
 
+        # print(linda_cmd, data)
         if linda_cmd == 'POST':
             found = self.search_db('BLOCK',data)
+
             if found:
                 (block_idx, return_data, send) = found
                 self.tuple_db['BLOCK'].pop(block_idx) # found[0][0] --> index
@@ -154,7 +164,7 @@ class server(object):
             # Pull in, Blocking
             found = self.search_db('POST', data)
             if found:
-                (idx, return_data, s) = found
+                (idx, return_data, _s) = found
                 self.reply(sock,return_data) # found[0][1] -->
                 self.tuple_db['POST'].pop(idx)
             else:
@@ -164,9 +174,10 @@ class server(object):
         if linda_cmd == 'IN_N':
             # Pull in, Non-blocking
             found = self.search_db('POST', data)
-
+            print(found)
             if found:
-                (block_idx, return_data,s) = found
+                # (block_idx, return_data,s) = found
+                (block_idx, return_data,_s) = found
                 self.reply(sock,return_data)
                 self.tuple_db['POST'].pop(post_idx)
             else:
@@ -177,7 +188,7 @@ class server(object):
             # Read, Blocking
             found = self.search_db('POST', data)
             if found:
-                (block_idx, return_data, s) = found
+                (block_idx, return_data, _s) = found
                 # print('found; %s : %s' % (block_idx, return_data))
                 self.reply(sock,return_data)
             else:
@@ -188,8 +199,8 @@ class server(object):
             # Read, Non-blocking
             found = self.search_db('POST', data)
             if found:
-                (block_idx, return_data,s) = found
-                self.reply(return_data)
+                (block_idx, return_data,_s) = found
+                self.reply(sock,return_data)
             else:
                 self.reply(sock,False)
             return

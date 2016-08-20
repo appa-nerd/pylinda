@@ -47,12 +47,11 @@ class client(object):
 
         try:
             (svr_hostname,svr_port) = broadcast.recvfrom(self.recv_buffer)
-        except:
-            print "no server"
+        except Exception as msg:
+            print("no server", msg)
             sys.exit()
 
         broadcast.close()
-
         self.attach( svr_hostname, svr_port[1])
         return self
 
@@ -87,6 +86,7 @@ class client(object):
     def reply(self, message, cmd):
         pickled_payload = pickle.dumps((message,cmd))
         self.sock.send(pickled_payload)
+        time.sleep(0.05)
 
     def receive(self):
         data = self.sock.recv(self.recv_buffer)  # not blocking?

@@ -45,7 +45,8 @@ class server(object):
     def setup(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
-        self.server_socket.bind(('',self.server_port))    # use the hostname :(
+        # self.server_socket.bind(('',self.server_port))    # use the hostname :(
+        self.server_socket.bind(('',self.auto_port))    # use the hostname :(
         self.server_socket.listen(5)   # might be important, but it appears the clients are connecting fine.
 
         self.auto_socket = socket.socket(socket.AF_INET, # internet

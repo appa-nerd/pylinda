@@ -47,7 +47,7 @@ class client(object):
 
         try:
             (client_port,svr_port) = broadcast.recvfrom(self.recv_buffer)
-            print(svr_port)
+            print(client_port)
         except Exception as msg:
             print("no server", msg)
             sys.exit()

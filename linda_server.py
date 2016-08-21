@@ -74,7 +74,7 @@ class server(object):
                         (process_name,fd) = sock.recvfrom(self.recv_buffer)
                         print( "Autosocket:", process_name)
                         print(fd)
-                        sock.sendto(self.host,fd)
+                        sock.sendto(self.server_port,fd)
                     elif sock == self.server_socket:    # connection request
                         client, addr = self.server_socket.accept()
                         print("Serversocket: %s" % client)

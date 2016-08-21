@@ -46,7 +46,7 @@ class client(object):
         broadcast.sendto(__main__.__file__, cast)
 
         try:
-            (svr_hostname,svr_port) = broadcast.recvfrom(self.recv_buffer)
+            (client_port,svr_port) = broadcast.recvfrom(self.recv_buffer)
             print(svr_port)
         except Exception as msg:
             print("no server", msg)
@@ -54,7 +54,8 @@ class client(object):
 
         broadcast.close()
         # self.attach( svr_hostname, svr_port[1])
-        self.attach( svr_port[0], svr_port[1])
+        #self.attach( svr_port[0], svr_port[1])
+        self.attach( svr_port[0], int(client_port))
         return self
 
     def attach(self,svr_host,svr_port):

@@ -27,7 +27,7 @@ class server(object):
     def __init__(self,PORT=default_port):
         self.recv_buffer = default_buff
         self.auto_port = int(PORT)
-        self.server_port = 1309
+        self.server_port = 8048
         # self.server_addr = ("0.0.0.0", self.server_port)
         self.auto_addr = ("0.0.0.0", self.auto_port)
         self.host = socket.gethostname()

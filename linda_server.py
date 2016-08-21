@@ -47,8 +47,8 @@ class server(object):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
 
-        #self.server_socket.bind((self.host,self.auto_port))    # use the hostname :(
-        self.server_socket.bind((self.local,self.auto_port))    # use the ip address :)
+        self.server_socket.bind((self.host,self.auto_port))    # use the hostname :(
+        #self.server_socket.bind((self.local,self.auto_port))    # use the ip address :)
         # self.server_socket.listen(socket.SOMAXCONN)   # might be important, but it appears the clients are connecting fine.
         self.server_socket.listen(5)   # might be important, but it appears the clients are connecting fine.
 
@@ -70,25 +70,28 @@ class server(object):
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
             # self.report()
             for sock in read_list:
-                if sock == self.auto_socket:    #broadcast socket
-
-                    (process_name,fd) = sock.recvfrom(self.recv_buffer)
-                    sock.sendto(self.host,fd)
-                elif sock == self.server_socket:    # connection request
-
-                    client, addr = self.server_socket.accept()
-                    self.connections[client] = (addr, process_name)
-                else: #if sock:
-                    try:
-                        data = self.recv(sock)  # recieve method!
-                        # if data:
-                        self.command(data,sock)
-                    except Exception as msg:
-                        print( "Socket Error: %s" % msg)
-                        self.deregister(sock)
-                        sock.close()
-                    # self.report()
-                    self.report()
+                try:
+                    if sock == self.auto_socket:    #broadcast socket
+                        (process_name,fd) = sock.recvfrom(self.recv_buffer)
+                        print( "Autosocket:", process_name)
+                        sock.sendto(self.host,fd)
+                    elif sock == self.server_socket:    # connection request
+                        client, addr = self.server_socket.accept()
+                        print("Serversocket: %s" % client)
+                        self.connections[client] = (addr, process_name)
+                    else: #if sock:
+                        try:
+                            data = self.recv(sock)  # recieve method!
+                            # if data:
+                            self.command(data,sock)
+                        except Exception as msg:
+                            print( "Socket Error: %s" % msg)
+                            self.deregister(sock)
+                            sock.close()
+                        # self.report()
+                        self.report()
+                except Exception as msg:
+                    print("Server exception: %s" % msg)
 
 
 

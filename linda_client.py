@@ -53,6 +53,7 @@ class client(object):
 
         broadcast.close()
         self.attach( svr_hostname, svr_port[1])
+        #self.attach( svr_port[0], svr_port[1])
         return self
 
     def attach(self,svr_host,svr_port):
@@ -86,7 +87,7 @@ class client(object):
     def reply(self, message, cmd):
         pickled_payload = pickle.dumps((message,cmd))
         self.sock.send(pickled_payload)
-        time.sleep(0.05)
+        time.sleep(0.01)
 
     def receive(self):
         data = self.sock.recv(self.recv_buffer)  # not blocking?

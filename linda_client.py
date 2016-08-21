@@ -54,8 +54,8 @@ class client(object):
 
         broadcast.close()
         # self.attach( svr_hostname, svr_port[1])
-        #self.attach( svr_port[0], svr_port[1])
-        self.attach( svr_port[0], int(client_port))
+        self.attach( svr_port[0], svr_port[1])
+        #self.attach( svr_port[0], int(client_port))
         return self
 
     def attach(self,svr_host,svr_port):

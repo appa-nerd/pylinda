@@ -37,8 +37,8 @@ class client(object):
     def now(self):
         return datetime.datetime.utcnow()
 
-    def auto_connect(self):
-        cast = ('<broadcast>', self.auto_port)
+    def auto_connect(self, target='<broadcast>'):
+        cast = (target, self.auto_port)
         broadcast = socket.socket(socket.AF_INET,
                                     socket.SOCK_DGRAM) #socket.SOCK_STREAM) #
         broadcast.settimeout(5)
@@ -47,13 +47,14 @@ class client(object):
 
         try:
             (svr_hostname,svr_port) = broadcast.recvfrom(self.recv_buffer)
+            print(svr_port)
         except Exception as msg:
             print("no server", msg)
             sys.exit()
 
         broadcast.close()
-        self.attach( svr_hostname, svr_port[1])
-        #self.attach( svr_port[0], svr_port[1])
+        # self.attach( svr_hostname, svr_port[1])
+        self.attach( svr_port[0], svr_port[1])
         return self
 
     def attach(self,svr_host,svr_port):
@@ -87,7 +88,8 @@ class client(object):
     def reply(self, message, cmd):
         pickled_payload = pickle.dumps((message,cmd))
         self.sock.send(pickled_payload)
-        time.sleep(0.01)
+        self.receive()  # pauses to confirm message recieved.
+
 
     def receive(self):
         data = self.sock.recv(self.recv_buffer)  # not blocking?

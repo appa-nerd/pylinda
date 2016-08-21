@@ -31,7 +31,6 @@ class server(object):
         # self.server_addr = ("0.0.0.0", self.server_port)
         self.auto_addr = ("0.0.0.0", self.auto_port)
         self.host = socket.gethostname()
-        self.local = socket.gethostbyname(self.host)
         self.debug = False
         self.tuple_db = {'BLOCK':[], 'POST':[]}
         self.connections = {}
@@ -46,10 +45,7 @@ class server(object):
     def setup(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
-
-        self.server_socket.bind((self.host,self.auto_port))    # use the hostname :(
-        #self.server_socket.bind((self.local,self.auto_port))    # use the ip address :)
-        # self.server_socket.listen(socket.SOMAXCONN)   # might be important, but it appears the clients are connecting fine.
+        self.server_socket.bind(('',self.auto_port))    # use the hostname :(
         self.server_socket.listen(5)   # might be important, but it appears the clients are connecting fine.
 
         self.auto_socket = socket.socket(socket.AF_INET, # internet
@@ -69,6 +65,9 @@ class server(object):
         while self.activate:
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
             # self.report()
+            que = len(read_list)
+            if que > 1:
+                print('queue: %s' % len(read_list))
             for sock in read_list:
                 try:
                     if sock == self.auto_socket:    #broadcast socket
@@ -82,13 +81,12 @@ class server(object):
                     else: #if sock:
                         try:
                             data = self.recv(sock)  # recieve method!
-                            # if data:
-                            self.command(data,sock)
+                            if data:
+                                self.command(data,sock)
                         except Exception as msg:
                             print( "Socket Error: %s" % msg)
                             self.deregister(sock)
                             sock.close()
-                        # self.report()
                         self.report()
                 except Exception as msg:
                     print("Server exception: %s" % msg)
@@ -103,10 +101,12 @@ class server(object):
 
 
     def reply(self,sock,term):
-        sock.send(pickle.dumps(term))      # TCP or UDP?
+        sock.send(pickle.dumps(term))
 
     def recv(self,sock):
-        return sock.recv(default_buff)     # TCP or UDP?
+        x = sock.recv(default_buff)
+        self.reply(sock,'')
+        return x
 
     def shutdown(self):
         self.activate = False

@@ -3,6 +3,7 @@
 import os
 import sys
 import time
+import struct
 import pickle
 import socket
 import select

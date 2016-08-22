@@ -102,9 +102,11 @@ class server(object):
 
     def reply(self,sock,term):
         pickled_payload = pickle.dumps(term)
-        header = struct.pack('>i', len(pickled_payload))
+        print 1
         sock.sendall(struct.pack('!I', len(pickled_payload)))
+        print 2
         sock.sendall(pickled_payload)
+        print 3
         # sock.send(pickle.dumps(term))
 
     def recv(self,sock):

@@ -109,7 +109,7 @@ class server(object):
 
     def recv(self,sock):
         _buffer_ = sock.recv(4)
-        _recv_buff = struct.unpack('!I', _buffer_)
+        _recv_buff, = struct.unpack('!I', _buffer_)
         print _recv_buff
         data = sock.recv(_recv_buff)
         return pickle.loads(data)

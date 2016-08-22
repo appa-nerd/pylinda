@@ -74,7 +74,6 @@ class server(object):
                     if sock == self.auto_socket:    #broadcast socket
                         (process_name,fd) = sock.recvfrom(self.recv_buffer)
                         print( "Autosocket:", process_name)
-                        print(self.server_port)
                         sock.sendto(str(self.server_port),fd)
                     elif sock == self.server_socket:    # connection request
                         client, addr = self.server_socket.accept()
@@ -93,8 +92,6 @@ class server(object):
                 except Exception as msg:
                     print("Server exception: %s" % msg)
 
-
-
         # shutdown server
         for x in self.connections:
             if x == self.server_socket:
@@ -103,12 +100,21 @@ class server(object):
 
 
     def reply(self,sock,term):
-        sock.send(pickle.dumps(term))
+        pickled_payload = pickle.dumps(term)
+        header = struct.pack('>i', len(pickled_payload))
+        self.sock.sendall(struct.pack('!I', len(pickled_payload)))
+        self.sock.sendall(pickled_payload)
+        # sock.send(pickle.dumps(term))
 
     def recv(self,sock):
-        x = sock.recv(default_buff)
-        self.reply(sock,'')
-        return x
+        _buffer_ = self.sock.recv(4)
+        _recv_buff = struct.unpack('!I', _buffer_)
+        data = self.sock.recv(_recv_buff)
+        return pickle.loads(data)
+
+        # x = sock.recv(default_buff)
+        # self.reply(sock,'')
+        # return x
 
     def shutdown(self):
         self.activate = False

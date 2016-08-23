@@ -113,7 +113,6 @@ class server(object):
         header = sock.recv(4)
         buff, = struct.unpack('!I', header)
         print('buffer: %s' % buff)
-
         my_buffer = 0
         data = ''
         while len(data) < int(buff):

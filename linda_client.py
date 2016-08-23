@@ -92,8 +92,9 @@ class client(object):
         header = struct.pack('!I', len(pickled_payload))
 
         self.sock.send(str(header))
+        print('sending: %s' % len(pickled_payload))
         bytes = self.sock.send(pickled_payload)
-        print(len(pickled_payload), bytes  )
+        print('sent:', bytes )
 
     def receive(self):
         '''

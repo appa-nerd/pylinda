@@ -114,6 +114,7 @@ class server(object):
         buff, = struct.unpack('!I', header)
         print(buff,'?')
         data = sock.recv(int(buff))
+        print(2)
         return pickle.loads(data)
 
         # x = sock.recv(default_buff)

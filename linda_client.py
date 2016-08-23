@@ -92,9 +92,9 @@ class client(object):
         header = struct.pack('!I', len(pickled_payload))
 
         self.sock.send(str(header))
-        print('sending: %s' % len(pickled_payload))
+        # print('sending: %s' % len(pickled_payload))
         bytes = self.sock.send(pickled_payload)
-        print('sent:', bytes )
+        # print('sent:', bytes )
 
     def receive(self):
         '''
@@ -106,8 +106,13 @@ class client(object):
         buff, = struct.unpack('!I', header)
         my_buffer = 0
         data = ''
+
+        my_buff = int(buff)
+        data = ''
         while len(data) < int(buff):
-            data += self.sock.recv(1024)
+            data += self.sock.recv(my_buff)
+            my_buff = int(buff) - len(data)
+
         return pickle.loads(data)
 
 

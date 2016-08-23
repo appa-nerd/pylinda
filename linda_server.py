@@ -119,6 +119,7 @@ class server(object):
             if new_data:
                 data += new_data
             else:
+                print('client quit!')
                 return False
 
             my_buff = int(buff) - len(data)

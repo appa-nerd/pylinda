@@ -118,7 +118,7 @@ class server(object):
         data = ''
         while len(data) < int(buff):
 
-            data += sock.recv(1024)
+            data += sock.recv(int(buff))
             print(len(data))
         # data = sock.recv(int(buff))
         return pickle.loads(data)

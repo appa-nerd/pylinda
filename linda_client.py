@@ -93,6 +93,7 @@ class client(object):
         print(header,len(pickled_payload),'??')
         self.sock.send(str(header))
         self.sock.send(pickled_payload)
+        print(pickle.loads(pickled_payload))
 
 
     def receive(self):

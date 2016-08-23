@@ -116,7 +116,9 @@ class server(object):
         print(buff,'?')
         data = sock.recv(int(buff))
         print(2,data)
-        return pickle.loads(data)
+        data = pickle.loads(data)
+        print data
+        return data
 
         # x = sock.recv(default_buff)
         # self.reply(sock,'')

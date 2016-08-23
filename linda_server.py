@@ -111,14 +111,9 @@ class server(object):
 
     def recv(self,sock):
         header = sock.recv(4)
-        print(header, '?')
         buff, = struct.unpack('!I', header)
-        print(buff,'?')
         data = sock.recv(int(buff))
-        print(2,data)
-        data = pickle.loads(data)
-        print 3, data
-        return data
+        return pickle.loads(data)
 
         # x = sock.recv(default_buff)
         # self.reply(sock,'')
@@ -152,7 +147,7 @@ class server(object):
         #     return [(self.tuple_db[db_name].index(x),x) for x in self.tuple_db[db_name] if match == x] # [(idx,msg),]
 
 
-    def command(self, pickle_data, sock):
+    def command(self, command_tuple, sock):
         '''
         (data, linda_cmd)
         POST
@@ -161,7 +156,7 @@ class server(object):
         RD_B
         RD_N
         '''
-        (data, linda_cmd) = pickle.loads(pickle_data)
+        (data, linda_cmd) = command_tuple
         if linda_cmd == "shutdown":
             print('shutdown')
             self.shutdown()

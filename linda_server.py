@@ -118,7 +118,7 @@ class server(object):
         while len(data) < my_buff:
             data += sock.recv(my_buff)
             my_buff -= int(buff) - len(data)
-            print('.'),
+            print(my_buff),
             sys.stdout.flush()
         print('recieved: %s' % len(data))
         # data = sock.recv(int(buff))

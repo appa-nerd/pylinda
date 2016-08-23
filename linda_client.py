@@ -90,7 +90,7 @@ class client(object):
     def reply(self, message, cmd):
         pickled_payload = pickle.dumps((message,cmd))
         header = struct.pack('!I', len(pickled_payload))
-        print(header,len(pickled_payload),'??')
+        # print(header,len(pickled_payload),'??')
         self.sock.send(str(header))
         self.sock.send(pickled_payload)
         print(pickle.loads(pickled_payload))
@@ -98,9 +98,9 @@ class client(object):
 
     def receive(self):
         header = self.sock.recv(4)
-        print(header,'?')
+        # print(header,'?')
         buff, = struct.unpack('!I', header)
-        data = self.sock.recv(int(_recv_buff))
+        data = self.sock.recv(int(buff))
         return pickle.loads(data)
 
         # try:

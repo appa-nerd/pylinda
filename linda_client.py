@@ -89,17 +89,15 @@ class client(object):
 
     def reply(self, message, cmd):
         pickled_payload = pickle.dumps((message,cmd))
-        header = struct.pack('>i', len(pickled_payload))
-        self.sock.sendall(struct.pack('!I', len(pickled_payload)))
-        self.sock.sendall(pickled_payload)
-        # self.sock.send(pickled_payload)
-        # self.receive()  # pauses to confirm message recieved.
+        header = struct.pack('!I', len(pickled_payload))
+        self.sock.send(str(header))
+        self.sock.send(pickled_payload)
 
 
     def receive(self):
-        _buffer_ = self.sock.recv(4)
-        _recv_buff = int(struct.unpack('!I', _buffer_))
-        data = self.sock.recv(_recv_buff)
+        header = self.sock.recv(4)
+        buff, = struct.unpack('!I', header)
+        data = self.sock.recv(int(_recv_buff))
         return pickle.loads(data)
 
         # try:

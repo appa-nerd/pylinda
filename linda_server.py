@@ -32,7 +32,7 @@ class server(object):
         # self.server_addr = ("0.0.0.0", self.server_port)
         self.auto_addr = ("0.0.0.0", self.auto_port)
         self.host = socket.gethostname()
-        self.debug = True
+        self.debug = False
         self.tuple_db = {'BLOCK':[], 'POST':[]}
         self.connections = {}
         self.setup()

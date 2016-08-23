@@ -90,23 +90,24 @@ class client(object):
     def reply(self, message, cmd):
         pickled_payload = pickle.dumps((message,cmd))
         header = struct.pack('!I', len(pickled_payload))
-        # print(header,len(pickled_payload),'??')
-        self.sock.send(str(header))
-        self.sock.send(pickled_payload)
-        print(pickle.loads(pickled_payload))
 
+        self.sock.send(str(header))
+        bytes = self.sock.send(pickled_payload)
+        print(len(pickled_payload), bytes  )
 
     def receive(self):
+        '''
+        Max recieve is 8k, so for larger loads you need to
+        keep reading.
+        '''
         header = self.sock.recv(4)
         # print(header,'?')
         buff, = struct.unpack('!I', header)
-        data = self.sock.recv(int(buff))
+        my_buffer = 0
+        data = ''
+        while len(data) < int(buff):
+            data += self.sock.recv(1024)
         return pickle.loads(data)
-
-        # try:
-        # except socket.error as err:
-            # print( "server isn't speaking to us!: %s" % err )
-
 
 
 """------------------------------------------------------------*

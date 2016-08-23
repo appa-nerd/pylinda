@@ -111,7 +111,7 @@ class server(object):
     def recv(self,sock):
         header = sock.recv(4)
         buff, = struct.unpack('!I', header)
-        print('buffer: %s' % buff)
+        # print('buffer: %s' % buff)
         my_buff = int(buff)
         data = ''
         while len(data) < int(buff):
@@ -119,7 +119,7 @@ class server(object):
             my_buff = int(buff) - len(data)
             # print(my_buff),
             # sys.stdout.flush()
-        print('recieved: %s' % len(data))
+        # print('recieved: %s' % len(data))
         # data = sock.recv(int(buff))
         return pickle.loads(data)
 

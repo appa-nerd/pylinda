@@ -234,7 +234,7 @@ class server(object):
                     title = "Posts"
                 print("-| Query: [%s]" % title)
                 for record in self.tuple_db[key]:
-                    print("|\t%s" %(str(record)[:100]))
+                    print("|\t%s" %(str(record[1])[:100]))
             print("-\_" + '_'*50)
             '''
             for x in self.connections:

@@ -103,7 +103,6 @@ class server(object):
     def reply(self,sock,term):
         pickled_payload = pickle.dumps(term)
         header = struct.pack('!I', len(pickled_payload))
-        print(header,'reply?')
         sock.send(header)
         sock.send(pickled_payload)
 
@@ -118,8 +117,8 @@ class server(object):
         while len(data) < int(buff):
             data += sock.recv(my_buff)
             my_buff = int(buff) - len(data)
-            print(my_buff),
-            sys.stdout.flush()
+            # print(my_buff),
+            # sys.stdout.flush()
         print('recieved: %s' % len(data))
         # data = sock.recv(int(buff))
         return pickle.loads(data)

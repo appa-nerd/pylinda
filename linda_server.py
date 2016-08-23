@@ -117,7 +117,7 @@ class server(object):
         data = sock.recv(int(buff))
         print(2,data)
         data = pickle.loads(data)
-        print data
+        print 3, data
         return data
 
         # x = sock.recv(default_buff)

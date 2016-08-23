@@ -103,6 +103,7 @@ class server(object):
     def reply(self,sock,term):
         pickled_payload = pickle.dumps(term)
         header = struct.pack('!I', len(pickled_payload))
+        print(header,'reply?')
         sock.send(header)
         sock.send(pickled_payload)
 

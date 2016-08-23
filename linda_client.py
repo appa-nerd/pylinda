@@ -96,6 +96,7 @@ class client(object):
 
     def receive(self):
         header = self.sock.recv(4)
+        print(header,'?')
         buff, = struct.unpack('!I', header)
         data = self.sock.recv(int(_recv_buff))
         return pickle.loads(data)

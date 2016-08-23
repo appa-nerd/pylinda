@@ -110,6 +110,7 @@ class server(object):
 
     def recv(self,sock):
         header = sock.recv(4)
+        print(header, '?')
         buff, = struct.unpack('!I', header)
         print(buff,'?')
         data = sock.recv(int(buff))

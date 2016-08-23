@@ -106,7 +106,6 @@ class client(object):
         buff, = struct.unpack('!I', header)
         my_buffer = 0
         data = ''
-
         my_buff = int(buff)
         data = ''
         while len(data) < int(buff):

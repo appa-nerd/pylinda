@@ -11,8 +11,10 @@ import __main__
 import datetime
 
 from any import Any
-_ = Any(Any)
-dt = Any(datetime.datetime)
+
+_ = Any(Any)                # logical wild-card
+dt = Any(datetime.datetime) # logical datetime wild-card
+
 """------------------------------------------------------------*
     Declare
 #------------------------------------------------------------"""

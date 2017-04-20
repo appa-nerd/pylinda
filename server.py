@@ -1,3 +1,4 @@
+
 """
 """
 import os
@@ -81,7 +82,7 @@ class server(object):
                     elif sock == self.server_socket:    # connection request
                         client, addr = self.server_socket.accept()
                         print("Serversocket: %s" % client)
-                        self.connections[client] = (addr, process_name)
+                        self.connections[client] = (addr, client)
                     else: #if sock:
                         try:
                             data = self.recv(sock)  # recieve method!
@@ -179,7 +180,7 @@ class server(object):
             self.shutdown()
             return
 
-        # print(linda_cmd, data)
+        print(linda_cmd, data)
         if linda_cmd == 'POST':
             found = self.search_db('BLOCK',data)
 

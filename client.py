@@ -131,7 +131,7 @@ if __name__ == "__main__":
     cfd.post((1,2,3,'hello'))
 
     print('pull')
-    y = cfd.read((1,2,3,_))
+    y = cfd.in_b((1,2,3,_))
     # y = cfd.pull((1,2,3,_))
 
     print('goodbye', y)

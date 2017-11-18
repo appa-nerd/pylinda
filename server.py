@@ -1,5 +1,11 @@
 
 """
+Title       pylinda/server 
+Version     1.0
+Author      appa
+Purpose
+
+
 """
 import os
 import sys
@@ -69,7 +75,7 @@ class server(object):
     def service(self):
         while self.activate:
             read_list, write_list, exe_list = select.select(self.connections.keys(),[],[])
-            # self.report()
+            #self.report()
             que = len(read_list)
             if que > 1:
                 print('queue: %s' % len(read_list))
@@ -78,7 +84,7 @@ class server(object):
                     if sock == self.auto_socket:    #broadcast socket
                         (process_name,fd) = sock.recvfrom(self.recv_buffer)
                         print( "Autosocket:", process_name)
-                        sock.sendto(str(self.server_port),fd)
+                        sock.sendto(str(self.server_port).encode('utf-8'),fd)
                     elif sock == self.server_socket:    # connection request
                         client, addr = self.server_socket.accept()
                         print("Serversocket: %s" % client)
@@ -116,7 +122,8 @@ class server(object):
         buff, = struct.unpack('!I', header)
         # print('buffer: %s' % buff)
         my_buff = int(buff)
-        data = ''
+
+        data = b''
         while len(data) < int(buff):
             new_data = sock.recv(my_buff)
             if new_data:
@@ -126,11 +133,10 @@ class server(object):
                 return False
 
             my_buff = int(buff) - len(data)
-
-            # print(my_buff),
-            # sys.stdout.flush()
+            sys.stdout.flush()
         # print('recieved: %s' % len(data))
         # data = sock.recv(int(buff))
+
         return pickle.loads(data)
 
         # x = sock.recv(default_buff)
@@ -206,7 +212,7 @@ class server(object):
         if linda_cmd == 'IN_N':
             # Pull in, Non-blocking
             found = self.search_db('POST', data)
-            print(found)
+            #print(found)
             if found:
                 # (block_idx, return_data,s) = found
                 (block_idx, return_data,_s) = found

@@ -10,7 +10,6 @@ import select
 import __main__
 import datetime
 
-from any import Any
 """------------------------------------------------------------*
     Declare
 #------------------------------------------------------------"""
@@ -18,13 +17,16 @@ default_port = 21643
 default_buff = 65536
 # default_buff = 1024
 max_buffer_len = 7
-_ = Any(Any)
+
+
+
 """------------------------------------------------------------*
     Classes
 #------------------------------------------------------------"""
 
 class client(object):
     def __init__(self,SOCK=None,PORT=default_port):
+        from pylinda.any import Any
         self.recv_buffer = default_buff
         self.auto_port = int(PORT)
         self.auto_addr = ("0.0.0.0", self.auto_port)
@@ -44,7 +46,10 @@ class client(object):
                                     socket.SOCK_DGRAM) #socket.SOCK_STREAM) #
         broadcast.settimeout(5)
         broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
-        broadcast.sendto(__main__.__file__, cast)
+        #broadcast.sendto(__main__.__file__, cast)
+        my_name_is = __main__.__file__
+
+        broadcast.sendto(__main__.__file__.encode('utf-8'), cast)  # broadcast executing program's filename.
 
         try:
             (client_port,svr_port) = broadcast.recvfrom(self.recv_buffer)
@@ -88,32 +93,39 @@ class client(object):
         return self.receive()
 
     def reply(self, message, cmd):
-        pickled_payload = pickle.dumps((message,cmd))
-        header = struct.pack('!I', len(pickled_payload))
-
-        self.sock.send(str(header))
-        # print('sending: %s' % len(pickled_payload))
-        bytes = self.sock.send(pickled_payload)
-        # print('sent:', bytes )
-
+        try:
+            pickled_payload = pickle.dumps((message,cmd))
+            header = struct.pack('!I', len(pickled_payload))
+            #self.sock.send(str(header).encode('utf-8'))
+            self.sock.send(header)
+            # print('sending: %s' % len(pickled_payload))
+            bytes = self.sock.send(pickled_payload)
+            # print('sent:', bytes )
+        except KeyboardInterrupt:
+            print("user disconnect!")
+            sys.exit()
     def receive(self):
         '''
         Max recieve is 8k, so for larger loads you need to
         keep reading.
         '''
-        header = self.sock.recv(4)
-        # print(header,'?')
-        buff, = struct.unpack('!I', header)
-        my_buffer = 0
-        data = ''
-        my_buff = int(buff)
-        data = ''
-        while len(data) < int(buff):
-            data += self.sock.recv(my_buff)
-            my_buff = int(buff) - len(data)
+        try:
+            header = self.sock.recv(4)
+            # print(header,'?')
+            buff, = struct.unpack('!I', header)
+            my_buffer = 0
+            my_buff = int(buff)
+            data = b''
+            while len(data) < int(buff):
+                data += self.sock.recv(my_buff)
+                my_buff = int(buff) - len(data)
 
-        return pickle.loads(data)
-
+            return pickle.loads(data)
+        except KeyboardInterrupt:
+            print("user disconnect!")
+            sys.exit()
+        except:
+            print('dead packet?')
 
 """------------------------------------------------------------*
     Main

@@ -1,5 +1,11 @@
 
 """
+Title       pylinda/server
+Version     1.0
+Author      appa
+Purpose
+
+
 """
 import os
 import sys
@@ -128,14 +134,7 @@ class server(object):
 
             my_buff = int(buff) - len(data)
             sys.stdout.flush()
-        # print('recieved: %s' % len(data))
-        # data = sock.recv(int(buff))
-
         return pickle.loads(data)
-
-        # x = sock.recv(default_buff)
-        # self.reply(sock,'')
-        # return x
 
     def shutdown(self):
         self.activate = False
@@ -147,16 +146,10 @@ class server(object):
 
         if DB == 'BLOCK':
             found = [(self.tuple_db[DB].index(x),x) for x in self.tuple_db[DB] if x[1] == match]
-            # print(123, match, found)
-            # for x in self.tuple_db[DB]:
-            #     print('aa',x[1], match == x[1], x[1] == match)
 
         if found:
             idx, store = found[0]
             socket, data = store
-            # print('-'*10)
-            # print(found[0])
-            # print('+'*10)
             return (idx,data,socket)
         else:
             return False
@@ -197,8 +190,8 @@ class server(object):
             found = self.search_db('POST', data)
             if found:
                 (idx, return_data, _s) = found
-                self.reply(sock,return_data) # found[0][1] -->
                 self.tuple_db['POST'].pop(idx)
+                self.reply(sock,return_data) # found[0][1] -->
             else:
                 self.tuple_db['BLOCK'].append((sock,data))
             return
@@ -210,8 +203,8 @@ class server(object):
             if found:
                 # (block_idx, return_data,s) = found
                 (block_idx, return_data,_s) = found
-                self.reply(sock,return_data)
                 self.tuple_db['POST'].pop(post_idx)
+                self.reply(sock,return_data)
             else:
                 self.reply(sock,False)
             return

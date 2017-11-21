@@ -1,4 +1,10 @@
 """
+Title       pylinda/client
+Version     1.0
+Author      appa
+Purpose
+
+
 """
 import os
 import sys
@@ -74,21 +80,26 @@ class client(object):
         self.sock.setttimeout(timeout)
 
     def post(self,message):
+        # post tuple
         return self.reply(message,'POST')
 
     def in_b(self,message):
+        # read blocking
         self.reply(message,'IN_B')
         return self.receive()
 
     def in_n(self,message):
+        # in non-blocking (bool)
         self.reply(message,'IN_N')
         return self.receive()
 
     def rd_b(self,message):
+        # read blocking
         self.reply(message,'RD_B')
         return self.receive()
 
     def rd_n(self,message):
+        # read non-blocking (bool)
         self.reply(message,'RD_N')
         return self.receive()
 
@@ -96,14 +107,12 @@ class client(object):
         try:
             pickled_payload = pickle.dumps((message,cmd))
             header = struct.pack('!I', len(pickled_payload))
-            #self.sock.send(str(header).encode('utf-8'))
             self.sock.send(header)
-            # print('sending: %s' % len(pickled_payload))
             bytes = self.sock.send(pickled_payload)
-            # print('sent:', bytes )
         except KeyboardInterrupt:
             print("user disconnect!")
             sys.exit()
+
     def receive(self):
         '''
         Max recieve is 8k, so for larger loads you need to

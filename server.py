@@ -3,7 +3,7 @@
 <<<<<<< HEAD
 Title       pylinda/server
 =======
-Title       pylinda/server 
+Title       pylinda/server
 >>>>>>> 41a01e3ef54fbc597982077c7ec8ff2cbdb9d715
 Version     1.0
 Author      appa
@@ -138,12 +138,7 @@ class server(object):
 
             my_buff = int(buff) - len(data)
             sys.stdout.flush()
-<<<<<<< HEAD
-=======
-        # print('recieved: %s' % len(data))
-        # data = sock.recv(int(buff))
 
->>>>>>> 41a01e3ef54fbc597982077c7ec8ff2cbdb9d715
         return pickle.loads(data)
 
     def shutdown(self):

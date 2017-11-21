@@ -107,23 +107,13 @@ class client(object):
         try:
             pickled_payload = pickle.dumps((message,cmd))
             header = struct.pack('!I', len(pickled_payload))
-<<<<<<< HEAD
             self.sock.send(header)
             bytes = self.sock.send(pickled_payload)
         except KeyboardInterrupt:
             print("user disconnect!")
             sys.exit()
 
-=======
-            #self.sock.send(str(header).encode('utf-8'))
-            self.sock.send(header)
-            # print('sending: %s' % len(pickled_payload))
-            bytes = self.sock.send(pickled_payload)
-            # print('sent:', bytes )
-        except KeyboardInterrupt:
-            print("user disconnect!")
-            sys.exit()
->>>>>>> 41a01e3ef54fbc597982077c7ec8ff2cbdb9d715
+
     def receive(self):
         '''
         Max recieve is 8k, so for larger loads you need to

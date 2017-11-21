@@ -208,7 +208,7 @@ class server(object):
             if found:
                 # (block_idx, return_data,s) = found
                 (block_idx, return_data,_s) = found
-                self.tuple_db['POST'].pop(post_idx)
+                self.tuple_db['POST'].pop(block_idx)
                 self.reply(sock,return_data)
             else:
                 self.reply(sock,False)

@@ -1,2 +1,8 @@
 dist/
 build/
+venv/
+
+*.egg-info/
+*.pyc
+*.gz
+*.swp

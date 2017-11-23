@@ -184,6 +184,7 @@ class server(object):
         IN_N    (non-blocking)
         RD_B
         RD_N
+        <new> WATCH - block for only new tuples (not existing)
         '''
         (data, linda_cmd) = command_tuple
         if linda_cmd == "shutdown":
@@ -201,6 +202,11 @@ class server(object):
                 self.reply(send,data)
             else:
                 self.tuple_db['POST'].append((sock,data))
+            return
+
+        if linda_cmd == 'WATCH':
+            # Wait for new tuples, Blocking
+            self.tuple_db['BLOCK'].append((sock,data))
             return
 
         if linda_cmd == 'IN_B':
@@ -271,7 +277,7 @@ class server(object):
 class client(object):
     _ = Any(Any)
     _dt = Any(datetime)
-    
+
     def __init__(self,SOCK=None,PORT=default_port):
         self.recv_buffer = default_buff
         self.auto_port = int(PORT)
@@ -322,6 +328,10 @@ class client(object):
     def post(self,message):
         # post tuple
         return self.reply(message,'POST')
+
+    def watch(self,message):
+        self.reply(message,'WATCH')
+        return self.recieve()
 
     def in_b(self,message):
         # read blocking

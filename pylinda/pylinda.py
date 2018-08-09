@@ -59,7 +59,9 @@ class server(object):
         self.auto_addr = ("0.0.0.0", self.auto_port)
         self.host = socket.gethostname()
         self.debug = False
-        self.tuple_db = {'BLOCK':[], 'POST':[]}
+        #self.tuple_db = {'BLOCK':[], 'POST':[]}
+        self.block = {}
+        self.post = {}
         self.connections = {}
         self.setup()
         self.activate = True
@@ -85,7 +87,8 @@ class server(object):
         self.connections[self.auto_socket] = (self.host, 'auto_socket')
 
     def deregister(self, sock):
-        [self.tuple_db['BLOCK'].pop(self.tuple_db['BLOCK'].index(x)) for x in self.tuple_db['BLOCK'] if x[1] == sock]
+        # remove any blocking tuples for <socket>
+        #[self.tuple_db['BLOCK'].pop(self.tuple_db['BLOCK'].index(x)) for x in self.tuple_db['BLOCK'] if x[1] == sock]
         del self.connections[sock]
         sock.close()
 
@@ -157,25 +160,6 @@ class server(object):
     def shutdown(self):
         self.activate = False
 
-    def search_db(self, DB, match):
-        # x <-- (sock,data)
-        if DB == 'POST':
-            found = [(self.tuple_db[DB].index(x),x) for x in self.tuple_db[DB] if match == x[1]]
-
-        if DB == 'BLOCK':
-            found = [(self.tuple_db[DB].index(x),x) for x in self.tuple_db[DB] if x[1] == match]
-
-        if found:
-            idx, store = found[0]
-            socket, data = store
-            return (idx,data,socket)
-        else:
-            return False
-
-        # if match in self.tuple_db[DB]:
-        #     return [(self.tuple_db[db_name].index(x),x) for x in self.tuple_db[db_name] if match == x] # [(idx,msg),]
-
-
     def command(self, command_tuple, sock):
         '''
         (data, linda_cmd)
@@ -186,72 +170,81 @@ class server(object):
         RD_N
         <new> WATCH - block for only new tuples (not existing)
         '''
-        (data, linda_cmd) = command_tuple
+        print('cmd',command_tuple)
+        print('post',self.post)
+        print('block',self.block)
+        (hash, linda_cmd) = command_tuple
+
         if linda_cmd == "shutdown":
             print('shutdown')
             self.shutdown()
             return
 
-        print(linda_cmd, data)
         if linda_cmd == 'POST':
-            found = self.search_db('BLOCK',data)
-
-            if found:
-                (block_idx, return_data, send) = found
-                self.tuple_db['BLOCK'].pop(block_idx) # found[0][0] --> index
-                self.reply(send,data)
+            '''
+            if nothing is blocked, add to post list
+            if block is RD, add to post list
+                return data to send_sock.
+            '''
+            hash, data = hash
+            blocked = self.block.get(hash,[])
+            if blocked == []:
+                self.post[hash] = self.post.get(hash,[]) + [data]
             else:
-                self.tuple_db['POST'].append((sock,data))
+                send_sock, cmd = self.block.get(hash,[]).pop()
+                self.reply(send_sock, data)
+                if cmd == 'RD':  # for reads, post the data.
+                    self.post[hash] = self.post.get(hash,[]) + [data]
             return
+
+
 
         if linda_cmd == 'WATCH':
             # Wait for new tuples, Blocking
-            self.tuple_db['BLOCK'].append((sock,data))
+            # destructive.
+            self.block[hash] = self.block.get(hash,[]) + [(sock,'IN')]
             return
 
         if linda_cmd == 'IN_B':
             # Pull in, Blocking
-            found = self.search_db('POST', data)
-            if found:
-                (idx, return_data, _s) = found
-                self.tuple_db['POST'].pop(idx)
-                self.reply(sock,return_data) # found[0][1] -->
+            found = self.post.get(hash,[])   # returns data
+            if found == []:
+                self.block[hash] = self.block.get(hash,[]) + [(sock,'IN')]
             else:
-                self.tuple_db['BLOCK'].append((sock,data))
+                data = self.post[hash].pop()
+                self.reply(sock,data) # found[0][1] -->
             return
 
         if linda_cmd == 'IN_N':
             # Pull in, Non-blocking
-            found = self.search_db('POST', data)
-            #print(found)
-            if found:
-                # (block_idx, return_data,s) = found
-                (block_idx, return_data,_s) = found
-                self.tuple_db['POST'].pop(block_idx)
-                self.reply(sock,return_data)
-            else:
+            #found = self.post.pop(hash,[])   # returns data
+            found = self.post.get(hash,[])
+            if found == []:
                 self.reply(sock,False)
+            else:
+                data = self.post[hash].pop()
+                self.reply(sock,data)
             return
 
         if linda_cmd == 'RD_B':
             # Read, Blocking
-            found = self.search_db('POST', data)
-            if found:
-                (block_idx, return_data, _s) = found
-                # print('found; %s : %s' % (block_idx, return_data))
-                self.reply(sock,return_data)
+            found = self.post.get(hash,[])
+            if found == []:
+                self.block[hash] = self.block.get(hash,[]) + [(sock,'RD')]
             else:
-                self.tuple_db['BLOCK'].append((sock,data))
+                data = self.post[hash][0]
+                self.reply(sock,data)
+
             return
 
         if linda_cmd == 'RD_N':
             # Read, Non-blocking
-            found = self.search_db('POST', data)
-            if found:
-                (block_idx, return_data,_s) = found
-                self.reply(sock,return_data)
-            else:
+            found = self.post.get(hash,[])
+            if found == []:
                 self.reply(sock,False)
+            else:
+                data = self.post[hash][0]
+                self.reply(sock,data)
             return
 
     def report(self):
@@ -299,7 +292,7 @@ class client(object):
         broadcast.settimeout(5)
         broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
         #broadcast.sendto(__main__.__file__, cast)
-        my_name_is = __main__.__file__
+        #my_name_is = __main__.__file__
 
         broadcast.sendto(__main__.__file__.encode('utf-8'), cast)  # broadcast executing program's filename.
 
@@ -325,9 +318,9 @@ class client(object):
     def wait(self,query,timeout):
         self.sock.setttimeout(timeout)
 
-    def post(self,message):
+    def post(self,hash,message):
         # post tuple
-        return self.reply(message,'POST')
+        return self.reply((hash,message),'POST')
 
     def watch(self,message):
         self.reply(message,'WATCH')
